@@ -1,3 +1,21 @@
 <resources>
     <string name="app_name">Walkman-Android</string>
+
+    <string-array name="history_array">
+    </string-array>
+
+    <string-array name="web_array">
+        <item>http://www.google.com</item>
+        <item>http://www.microsoft.com</item>
+        <item>http://www.apple.com</item>
+        <item>http://www.amazon.com</item>
+        <item>http://www.usa.gov</item>
+        <item>Jimmy Carter</item>
+        <item>Ronald Reagan</item>
+        <item>George H. W. Bush</item>
+        <item>Bill Clinton</item>
+        <item>George W. Bush</item>
+        <item>Barack Obama</item>
+    </string-array>
+
 </resources>
