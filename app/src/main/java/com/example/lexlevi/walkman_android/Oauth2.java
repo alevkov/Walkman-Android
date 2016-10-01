@@ -5,7 +5,6 @@ package com.example.lexlevi.walkman_android;
  */
 
 public class Oauth2 {
-
     //https://oauth.vk.com/authorize?client_id=&display=page&redirect_uri=&scope=&response_type=&v=5.56
     //https://oauth.vk.com/authorize?client_id=5643292&display=page&redirect_uri=https://oauth.vk.com/blank.html&scope=notify,audio&response_type=token&v=5.56
     private String client_ID;
@@ -15,8 +14,7 @@ public class Oauth2 {
     private String response_type;
     private String v;
 
-    public Oauth2()
-    {
+    public Oauth2() {
         client_ID = "5643292";
         display = "page";
         uri = "https://oauth.vk.com/blank.html";
@@ -25,14 +23,25 @@ public class Oauth2 {
         v = "5.56";
     }
 
-    public Oauth2(String client_ID, String display, String uri, String scope, String response_type, String v)
-    {
+    public Oauth2(String client_ID, String display, String uri, String scope, String response_type, String v) {
         this.client_ID = client_ID;
         this.display = display;
         this.uri = uri;
         this.scope = scope;
         this.response_type = response_type;
         this.v = v;
+    }
+
+    public static boolean hasAccessToken(String URL)
+    {
+        return URL.contains("access_token=");
+    }
+
+    public static String getAccessToken(String URL)
+    {
+        int i = URL.indexOf("=");
+        int j = URL.indexOf("&");
+        return URL.substring( i+1, j-1 );
     }
 
     public String toURL()
