@@ -10,52 +10,6 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.example.christopher.walkman_feature_login.MainActivity">
 
-    <Button
-        android:text="VK Login"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/main_button_login"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
-
-    <Button
-        android:text="GO TO CUSTOM URL"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/main_button_login"
-        android:layout_centerHorizontal="true"
-        android:id="@+id/main_button_custom" />
-
-    <TextView
-        android:text="access token:  "
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/main_textView_counter"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="17dp"
-        android:id="@+id/main_textView_access" />
-
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:inputType="textPersonName"
-        android:ems="10"
-        android:layout_below="@+id/main_button_custom"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:id="@+id/main_editText_URL"
-        android:text="http://www.google.com" />
-
-    <TextView
-        android:text="URLs: "
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/main_textView_counter"
-        android:layout_below="@+id/main_editText_URL"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
-
     <WebView
         android:layout_width="match_parent"
         android:layout_height="match_parent"

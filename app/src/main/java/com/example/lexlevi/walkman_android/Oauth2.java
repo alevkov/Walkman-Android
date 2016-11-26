@@ -12,7 +12,7 @@ public class Oauth2 {
     private String uri;
     private String scope;
     private String response_type;
-    private String v;
+    private String version;
 
     public Oauth2() {
         client_ID = "5643292";
@@ -20,7 +20,7 @@ public class Oauth2 {
         uri = "https://oauth.vk.com/blank.html";
         scope = "notify,audio";
         response_type = "token";
-        v = "5.56";
+        version = "5.56";
     }
 
     public Oauth2(String client_ID, String display, String uri, String scope, String response_type, String v) {
@@ -29,23 +29,20 @@ public class Oauth2 {
         this.uri = uri;
         this.scope = scope;
         this.response_type = response_type;
-        this.v = v;
+        this.version = v;
     }
 
-    public static boolean hasAccessToken(String URL)
-    {
+    public static boolean hasAccessToken(String URL) {
         return URL.contains("access_token=");
     }
 
-    public static String getAccessToken(String URL)
-    {
+    public static String getAccessToken(String URL) {
         int i = URL.indexOf("=");
         int j = URL.indexOf("&");
-        return URL.substring( i+1, j-1 );
+        return URL.substring(i+1, j-1);
     }
 
-    public String toURL()
-    {
-        return "https://oauth.vk.com/authorize?client_id=" + client_ID + "&display=" + display + "&redirect_uri=" + uri + "&scope=" + scope + "&response_type=" + response_type + "&v=" + v;
+    public String toURL() {
+        return "https://oauth.vk.com/authorize?client_id=" + client_ID + "&display=" + display + "&redirect_uri=" + uri + "&scope=" + scope + "&response_type=" + response_type + "&v=" + version;
     }
 }
