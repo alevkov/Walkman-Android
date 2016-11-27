@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
         loginURL = o2.toURL();
         if (UserSession.getInstance().isTokenValid()) {
             segueToSongsActivity();
-            Log.d("FUCK ME", PersistentStoreCoordinator.getInstance().fetchToken());
+            Log.d("MY APP", PersistentStoreCoordinator.getInstance().fetchToken());
             return;
         }
         browserWebView = (WebView) findViewById(R.id.main_webView_browser);
@@ -41,11 +41,11 @@ public class MainActivity extends AppCompatActivity {
                 //urlHistory.add(webView.getUrl());
                 if(Oauth2.hasAccessToken( webView.getUrl() )) {
                     if (!UserSession.getInstance().isTokenValid()) {
-                        Log.d("FUCK ME", "Token is invalid, setting token");
+                        Log.d("MY APP", "Token is invalid, setting token");
                         UserSession.getInstance().setToken(Oauth2.getAccessToken(webView.getUrl()));
                         segueToSongsActivity();
                     } else {
-                        Log.d("FUCK ME", "Token is valid");
+                        Log.d("MY APP", "Token is valid");
                         segueToSongsActivity();
                     }
                 }
