@@ -1,5 +1,7 @@
 package com.example.lexlevi.walkman_android;
 
+import android.util.Log;
+
 /**
  * Created by Christopher on 9/29/2016.
  */
@@ -39,10 +41,13 @@ public class Oauth2 {
     public static String getAccessToken(String URL) {
         int i = URL.indexOf("=");
         int j = URL.indexOf("&");
-        return URL.substring(i+1, j-1);
+        return URL.substring(i+1, j);
     }
 
     public String toURL() {
-        return "https://oauth.vk.com/authorize?client_id=" + client_ID + "&display=" + display + "&redirect_uri=" + uri + "&scope=" + scope + "&response_type=" + response_type + "&v=" + version;
+        return "https://oauth.vk.com/authorize?client_id=" +
+                client_ID + "&display=" + display + "&redirect_uri=" +
+                uri + "&scope=" + scope + "&response_type=" +
+                response_type + "&v=" + version;
     }
 }
