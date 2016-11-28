@@ -1,10 +1,11 @@
-package com.example.lexlevi.walkman_android;
+package com.example.lexlevi.walkman_android.Singleton;
 
 /**
  * Created by lexlevi on 11/25/16.
  */
 public class UserSession {
     private String token = "";
+    private String userId = "";
 
     private static UserSession ourInstance = new UserSession();
 
@@ -12,13 +13,22 @@ public class UserSession {
 
     private UserSession() { }
 
-    public void setToken(String s) {
-        this.token = s;
-        PersistentStoreCoordinator.getInstance().persistToken(s);
+    public void setToken(String t) {
+        this.token = t;
+        PersistentStoreCoordinator.getInstance().persistToken(t);
+    }
+
+    public void setUserId(String id) {
+        this.userId = id;
+        PersistentStoreCoordinator.getInstance().persistUserId(id);
     }
 
     public String getToken() {
         return PersistentStoreCoordinator.getInstance().fetchToken();
+    }
+
+    public String getUserId() {
+        return PersistentStoreCoordinator.getInstance().fetchUserId();
     }
 
     public boolean isTokenValid() {

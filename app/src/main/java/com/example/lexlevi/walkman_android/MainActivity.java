@@ -3,14 +3,13 @@ package com.example.lexlevi.walkman_android;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.Toast;
 import android.content.Intent;
+
+import com.example.lexlevi.walkman_android.Singleton.Oauth2;
+import com.example.lexlevi.walkman_android.Singleton.PersistentStoreCoordinator;
+import com.example.lexlevi.walkman_android.Singleton.UserSession;
 
 //main controller
 public class MainActivity extends AppCompatActivity {
@@ -32,9 +31,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         browserWebView = (WebView) findViewById(R.id.main_webView_browser);
-        // load login URL upon startup
         browserWebView.loadUrl(loginURL);
-        //webView behavior
         browserWebView.setWebViewClient(new WebViewClient() {
             public void onPageFinished(WebView webView, String URL) {
                 super.onPageFinished(webView, URL);
@@ -42,7 +39,9 @@ public class MainActivity extends AppCompatActivity {
                 if(Oauth2.hasAccessToken( webView.getUrl() )) {
                     if (!UserSession.getInstance().isTokenValid()) {
                         Log.d("MY APP", "Token is invalid, setting token");
-                        UserSession.getInstance().setToken(Oauth2.getAccessToken(webView.getUrl()));
+                        UserSession.getInstance().setToken( Oauth2.getAccessToken(webView.getUrl() ));
+                        Log.d("MY APP", Oauth2.getUserId( webView.getUrl() ));
+                        UserSession.getInstance().setUserId( Oauth2.getUserId(webView.getUrl() ));
                         segueToSongsActivity();
                     } else {
                         Log.d("MY APP", "Token is valid");

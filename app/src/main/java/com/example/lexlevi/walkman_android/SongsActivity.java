@@ -8,17 +8,28 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+<<<<<<< Updated upstream
 import android.view.View;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
+=======
+import android.widget.TableLayout;
+import android.widget.TableRow;
+>>>>>>> Stashed changes
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.lexlevi.walkman_android.Model.Audio;
+<<<<<<< Updated upstream
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+=======
+import com.example.lexlevi.walkman_android.Singleton.PersistentStoreCoordinator;
+import com.example.lexlevi.walkman_android.Singleton.UserSession;
+import com.example.lexlevi.walkman_android.Singleton.VKAPIConnector;
+>>>>>>> Stashed changes
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -55,7 +66,7 @@ public class SongsActivity extends AppCompatActivity {
      */
 
     protected void loadSongsForUser() {
-        VKAPIConnector.getInstance().GET_SongsByUserID("273016572", new Callback() {
+        VKAPIConnector.getInstance().GET_SongsByUserID(UserSession.getInstance().getUserId(), new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
                 Toast.makeText(getApplicationContext(), "Loading Failed! Try reloading.", Toast.LENGTH_SHORT);
