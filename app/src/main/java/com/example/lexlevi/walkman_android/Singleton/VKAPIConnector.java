@@ -1,14 +1,7 @@
-package com.example.lexlevi.walkman_android;
-
-import android.util.Log;
-
-import com.google.gson.Gson;
-
-import java.util.Map;
+package com.example.lexlevi.walkman_android.Singleton;
 
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 

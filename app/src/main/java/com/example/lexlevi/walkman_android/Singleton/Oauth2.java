@@ -1,4 +1,4 @@
-package com.example.lexlevi.walkman_android;
+package com.example.lexlevi.walkman_android.Singleton;
 
 import android.util.Log;
 
@@ -7,6 +7,7 @@ import android.util.Log;
  */
 
 public class Oauth2 {
+
     //https://oauth.vk.com/authorize?client_id=&display=page&redirect_uri=&scope=&response_type=&v=5.56
     //https://oauth.vk.com/authorize?client_id=5643292&display=page&redirect_uri=https://oauth.vk.com/blank.html&scope=notify,audio&response_type=token&v=5.56
     private String client_ID;
@@ -35,6 +36,9 @@ public class Oauth2 {
     }
 
     public static boolean hasAccessToken(String URL) {
+        if (URL.contains("access_token=")) {
+            Log.d("MY APP", URL);
+        }
         return URL.contains("access_token=");
     }
 
@@ -42,6 +46,15 @@ public class Oauth2 {
         int i = URL.indexOf("=");
         int j = URL.indexOf("&");
         return URL.substring(i+1, j);
+    }
+
+    public static String getUserId(String URL) {
+        int i = URL.indexOf("user_id");
+        int j = URL.length();
+        String sub = URL.substring(i, j);
+        int k  = sub.indexOf("=");
+        int l = sub.length();
+        return sub.substring(k + 1, l);
     }
 
     public String toURL() {
