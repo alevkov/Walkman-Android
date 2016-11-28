@@ -5,6 +5,7 @@ package com.example.lexlevi.walkman_android;
  */
 
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -67,11 +68,12 @@ public class SongsActivity extends AppCompatActivity {
             titleTextView.setLayoutParams(llp);
             TextView artistTextView = new TextView(this);
             artistTextView.setLayoutParams(llp);
-            titleTextView.setText(song.title);
+            titleTextView.setText(song.title + " (" + secondsToTimeString(song.duration) + ") ");
+            titleTextView.setTypeface(null, Typeface.BOLD_ITALIC);
             titleTextView.setTextColor(Color.LTGRAY);
             titleTextView.setPadding(20, 10, 0, 0);
-            cell.addView(titleTextView);
             cell.addView(artistTextView);
+            cell.addView(titleTextView);
             artistTextView.setText(song.artist);
             artistTextView.setTextColor(Color.LTGRAY);
             artistTextView.setPadding(20, 0, 10, 0);
@@ -135,5 +137,14 @@ public class SongsActivity extends AppCompatActivity {
                 initTableLayout();
             }
         });
+    }
+
+    protected String secondsToTimeString(int d) {
+        int min = d / 60;
+        int sec = d % 60;
+        if (sec < 10) {
+            return "" + min + ":0" + sec;
+        }
+        return "" + min + ":" + sec;
     }
 }
