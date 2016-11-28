@@ -4,61 +4,80 @@ package com.example.lexlevi.walkman_android;
  * Created by lexlevi on 11/26/16.
  */
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-<<<<<<< Updated upstream
-import android.view.View;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.widget.Button;
-import android.widget.EditText;
-=======
+
 import android.widget.TableLayout;
 import android.widget.TableRow;
->>>>>>> Stashed changes
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.lexlevi.walkman_android.Model.Audio;
-<<<<<<< Updated upstream
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-=======
 import com.example.lexlevi.walkman_android.Singleton.PersistentStoreCoordinator;
 import com.example.lexlevi.walkman_android.Singleton.UserSession;
 import com.example.lexlevi.walkman_android.Singleton.VKAPIConnector;
->>>>>>> Stashed changes
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
 import okhttp3.Response;
 
 public class SongsActivity extends AppCompatActivity {
-
     private int songCount = 0;
     private ArrayList<Audio> songs = new ArrayList<Audio>();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_songs);
+        init();
+    }
+
+    public void init() {
+        getWindow().setNavigationBarColor(Color.argb(255, 55, 212, 149));
         PersistentStoreCoordinator.getInstance().setSettingsWithContext(getApplicationContext());
         loadSongsForUser();
+    }
+
+    public void initTableLayout() {
+        TableLayout songsTable = (TableLayout)findViewById(R.id.songs_table_view);
+        songsTable.setStretchAllColumns(true);
+        songsTable.bringToFront();
+        for(int i = 0; i < songs.size(); i++){
+            Audio song = (Audio) songs.get(i);
+            TableRow row = new TableRow(this);
+            row.setPadding(0, 0, 0, 1); //Border between rows
+            row.setMinimumHeight(100);
+            TableRow.LayoutParams llp = new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT,TableRow.LayoutParams.WRAP_CONTENT);
+            llp.setMargins(0, 0, 0, 0);//2px right-margin
+            TableLayout cell = new TableLayout(this);
+            int bColor = (i % 2 == 0) ? Color.argb(255, 14, 36, 48) : Color.argb(185, 14, 36, 48);
+            row.setBackgroundColor(bColor);
+            cell.setBackgroundColor(bColor);
+            cell.setLayoutParams(llp);//2px border on the right for the cell
+            TextView titleTextView = new TextView(this);
+            titleTextView.setLayoutParams(llp);
+            TextView artistTextView = new TextView(this);
+            artistTextView.setLayoutParams(llp);
+            titleTextView.setText(song.title);
+            titleTextView.setTextColor(Color.LTGRAY);
+            titleTextView.setPadding(20, 10, 0, 0);
+            cell.addView(titleTextView);
+            cell.addView(artistTextView);
+            artistTextView.setText(song.artist);
+            artistTextView.setTextColor(Color.LTGRAY);
+            artistTextView.setPadding(20, 0, 10, 0);
+            row.addView(cell);
+            songsTable.addView(row,i);
+        }
     }
 
     /**
@@ -79,7 +98,7 @@ public class SongsActivity extends AppCompatActivity {
                     JSONObject obj = new JSONObject(jsonString);
                     didFinishLoadingSongData(obj);
                 } catch (Exception e) {
-                    Log.d("MY APP", "Could not parse malformed JSON: " + e.toString());
+                    Log.d("MY APP", "FATAL ERROR: " + e.toString());
                 }
             }
         });
@@ -107,8 +126,14 @@ public class SongsActivity extends AppCompatActivity {
                 song.printPretty();
                 SongsActivity.this.songs.add(song);
             }
+
         } catch (Throwable t) {
-            Log.d("My App", "Could not parse malformed JSON: " + obj.toString());
+            Log.d("My App", "FATAL ERROR: " + obj.toString());
         }
+        SongsActivity.this.runOnUiThread(new Runnable() {
+            @Override public void run() {
+                initTableLayout();
+            }
+        });
     }
 }
