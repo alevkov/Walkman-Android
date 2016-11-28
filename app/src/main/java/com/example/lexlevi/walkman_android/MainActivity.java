@@ -31,11 +31,11 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         browserWebView = (WebView) findViewById(R.id.main_webView_browser);
+        browserWebView.clearCache(true);
         browserWebView.loadUrl(loginURL);
         browserWebView.setWebViewClient(new WebViewClient() {
             public void onPageFinished(WebView webView, String URL) {
                 super.onPageFinished(webView, URL);
-                //urlHistory.add(webView.getUrl());
                 if(Oauth2.hasAccessToken( webView.getUrl() )) {
                     if (!UserSession.getInstance().isTokenValid()) {
                         Log.d("MY APP", "Token is invalid, setting token");
