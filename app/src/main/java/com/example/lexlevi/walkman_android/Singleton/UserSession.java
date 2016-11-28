@@ -35,7 +35,9 @@ public class UserSession {
         return PersistentStoreCoordinator.getInstance().tokenExists() || !this.token.isEmpty();
     }
 
-    public void invalidateToken() {
-        this.token = null;
+    public void invalidateCredentials() {
+        PersistentStoreCoordinator.getInstance().destroyCredentials();
+        this.token = "";
+        this.userId = "";
     }
 }
