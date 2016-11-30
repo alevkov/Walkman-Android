@@ -183,7 +183,7 @@ public class SongsActivity extends AppCompatActivity {
 
     protected void onCompletionEvent() {
         playerControl.setImageResource(R.drawable.ic_play);
-        player.pause();
+        player.stop();
         player.reset();
     }
 
