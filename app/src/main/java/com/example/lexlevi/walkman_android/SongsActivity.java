@@ -10,7 +10,6 @@ import android.graphics.Typeface;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.widget.ImageView;
-import android.widget.MediaController.MediaPlayerControl;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -216,7 +215,6 @@ public class SongsActivity extends AppCompatActivity {
 
     protected void didFinishLoadingSongData(JSONObject obj) {
         try {
-            Log.d("MY APP", obj.getJSONArray("response").toString());
             JSONArray array = obj.getJSONArray("response");
             for (int i = 1; i < array.length(); i++) {
                 JSONObject songObj = array.getJSONObject(i);
