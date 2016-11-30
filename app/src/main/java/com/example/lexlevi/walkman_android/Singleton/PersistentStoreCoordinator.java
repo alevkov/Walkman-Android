@@ -70,5 +70,4 @@ public class PersistentStoreCoordinator {
         prefsEditor.putString(USER_ID, null);
         prefsEditor.commit();
     }
-
 }
