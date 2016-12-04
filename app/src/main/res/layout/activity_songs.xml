@@ -4,10 +4,40 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:weightSum="1">
+    <android.support.v7.widget.Toolbar
+        android:background="#93C6B5"
+        android:theme="@style/Base.ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:layout_width="match_parent"
+        android:layout_height="100dp">
+
+        <TextView
+            android:id="@+id/selected_track_artist"
+            android:paddingLeft="8dp"
+            android:paddingBottom="2dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="6pt"/>
+
+        <TextView
+            android:id="@+id/selected_track_title"
+            android:paddingLeft="8dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="6pt"/>
+
+
+        <ImageView
+            android:id="@+id/player_control"
+            android:layout_gravity="right"
+            android:layout_width="40dp"
+            android:layout_height="40dp"/>
+
+    </android.support.v7.widget.Toolbar>
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="#0E2430">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -26,6 +56,8 @@
                     android:id="@+id/songs_table_view_row"
                     android:paddingLeft="10dp" />
             </TableLayout>
+
+
         </LinearLayout>
     </ScrollView>
 

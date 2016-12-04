@@ -9,6 +9,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.widget.ImageView;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -37,8 +38,15 @@ import okhttp3.Response;
 
 public class SongsActivity extends AppCompatActivity {
 
+    private Integer currentlyPlayingSongIdx = -1;
+
     private MediaPlayer player = new MediaPlayer();
+    private ImageView playerControl;
+    private TextView selectedTrackTitle;
+    private TextView selectedTrackArtist;
+
     private ArrayList<Audio> songs = new ArrayList<>();
+
 
     /**
      * View Setup
@@ -54,18 +62,35 @@ public class SongsActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
+        logout();
+    }
+
+    public void init() {
+        getWindow().setNavigationBarColor(Color.argb(255, 147, 198, 181));
+        PersistentStoreCoordinator.getInstance().setSettingsWithContext(getApplicationContext());
+        selectedTrackTitle = (TextView)findViewById(R.id.selected_track_title);
+        selectedTrackArtist = (TextView)findViewById(R.id.selected_track_artist);
+        playerControl = (ImageView)findViewById(R.id.player_control);
+        playerControl.setImageResource(R.drawable.ic_play);
+        playerControl.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) { onPlayClick(); }
+        });
+        player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) { onCompletionEvent(); }
+        });
+        loadSongsForUser();
+    }
+
+    public void logout() {
+        player.stop(); player.reset();
         getApplicationContext().deleteDatabase("webview.db");
         getApplicationContext().deleteDatabase("webviewCache.db");
         UserSession.getInstance().invalidateCredentials();
         Intent i = new Intent(getApplicationContext(), MainActivity.class);
         startActivity(i);
         setContentView(R.layout.activity_songs);
-    }
-
-    public void init() {
-        getWindow().setNavigationBarColor(Color.argb(255, 55, 212, 149));
-        PersistentStoreCoordinator.getInstance().setSettingsWithContext(getApplicationContext());
-        loadSongsForUser();
     }
 
     /**
@@ -76,11 +101,15 @@ public class SongsActivity extends AppCompatActivity {
         TableLayout songsTable = (TableLayout)findViewById(R.id.songs_table_view);
         songsTable.setStretchAllColumns(true);
         songsTable.bringToFront();
+        if (songs.isEmpty()) {
+            Toast.makeText(getApplicationContext(), "No songs!", Toast.LENGTH_LONG);
+            return;
+        }
         for(int i = 0; i < songs.size(); i++){
             Audio song = songs.get(i);
             TableRow row = new TableRow(this);
             row.setPadding(0, 0, 0, 1);
-            row.setMinimumHeight(110);
+            row.setMinimumHeight(127);
             TableRow.LayoutParams llp = new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT,TableRow.LayoutParams.WRAP_CONTENT);
             llp.setMargins(0, 0, 0, 0);
             TableLayout cell = new TableLayout(this);
@@ -112,10 +141,7 @@ public class SongsActivity extends AppCompatActivity {
     public void setListenerForRow(final TableRow row, final Integer i) {
         row.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                didTapSongRowForIndex(i);
-            }
-
+            public void onClick(View v) { didTapSongRowForIndex(i); }
         });
     }
 
@@ -127,7 +153,7 @@ public class SongsActivity extends AppCompatActivity {
         VKAPIConnector.getInstance().GET_SongsByUserID(UserSession.getInstance().getUserId(), new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                Toast.makeText(getApplicationContext(), "Loading Failed! Try reloading.", Toast.LENGTH_SHORT);
+                Log.d("MY APP", "FATAL ERROR: " + e.toString());
             }
 
             @Override
@@ -144,15 +170,56 @@ public class SongsActivity extends AppCompatActivity {
     }
 
     /**
+     * Player Control Methods
+     *
+     */
+
+    protected void onPlayClick() {
+        if (player.isPlaying()) {
+            playerControl.setImageResource(R.drawable.ic_play);
+            player.pause();
+        } else {
+            player.start();
+            playerControl.setImageResource(R.drawable.ic_pause);
+        }
+    }
+
+    protected void onCompletionEvent() {
+        playerControl.setImageResource(R.drawable.ic_play);
+        player.stop();
+        player.reset();
+    }
+
+    protected void onSkipRightClick() {
+        if (currentlyPlayingSongIdx == (songs.size() - 1) || currentlyPlayingSongIdx == -1) {
+            return;
+        }
+        playSongAtIndex(++currentlyPlayingSongIdx);
+    }
+
+    protected void onSkipLeftClick() {
+        if (currentlyPlayingSongIdx == 0 || currentlyPlayingSongIdx == -1) {
+            return;
+        }
+        playSongAtIndex(--currentlyPlayingSongIdx);
+    }
+
+    protected void onVolumeSliderValueChanged() {
+
+    }
+
+    protected void onSeekTimeSliderValueChanged() {
+
+    }
+
+    /**
      * Helper Methods
      *
      */
 
     protected void didFinishLoadingSongData(JSONObject obj) {
         try {
-            Log.d("MY APP", obj.getJSONArray("response").toString());
             JSONArray array = obj.getJSONArray("response");
-            // starting with idx 1 because 0th object is count
             for (int i = 1; i < array.length(); i++) {
                 JSONObject songObj = array.getJSONObject(i);
                 Audio song = new Audio();
@@ -165,14 +232,24 @@ public class SongsActivity extends AppCompatActivity {
                 song.printPretty();
                 SongsActivity.this.songs.add(song);
             }
+            SongsActivity.this.runOnUiThread(new Runnable() {
+                @Override public void run() {
+                    initTableLayout();
+                }
+            });
         } catch (Throwable t) {
-            Log.d("My App", "FATAL ERROR: " + obj.toString());
-        }
-        SongsActivity.this.runOnUiThread(new Runnable() {
-            @Override public void run() {
-                initTableLayout();
+            Log.d("MY APP", "FATAL ERROR: " + obj.toString());
+            try {
+                JSONObject errorBody = obj.getJSONObject("error");
+                String code = errorBody.getString("error_code");
+                String msg = errorBody.getString("error_msg");
+                if (Integer.parseInt(code) == 5 || msg.contains("expired")) {
+                    logout();
+                }
+            } catch (Exception exception) {
+                Log.d("MY APP", "FATAL ERROR: " + exception.toString());
             }
-        });
+        }
     }
 
     protected void didTapSongRowForIndex(Integer i) {
@@ -180,11 +257,23 @@ public class SongsActivity extends AppCompatActivity {
     }
 
     protected void playSongAtIndex(Integer i) {
+        currentlyPlayingSongIdx = i;
         if (player.isPlaying()) {
             player.stop();
-            player.reset();
         }
+        player.reset();
         Audio song = songs.get(i);
+        if (song.title.length() > 22) {
+            selectedTrackTitle.setText(song.title.substring(0, 22) + "...");
+        } else {
+            selectedTrackTitle.setText(song.title);
+        }
+        if (song.artist.length() > 20) {
+            selectedTrackArtist.setText(song.artist.substring(0, 20) + "..." + "  | ");
+        } else {
+            selectedTrackArtist.setText(song.artist + "  | ");
+        }
+        playerControl.setImageResource(R.drawable.ic_pause);
         Log.d("MY APP", "Should be starting song:\n");
         song.printPretty();
         player.setAudioStreamType(AudioManager.STREAM_MUSIC);
