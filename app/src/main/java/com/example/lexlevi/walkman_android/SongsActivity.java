@@ -62,13 +62,7 @@ public class SongsActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        player.stop(); player.reset();
-        getApplicationContext().deleteDatabase("webview.db");
-        getApplicationContext().deleteDatabase("webviewCache.db");
-        UserSession.getInstance().invalidateCredentials();
-        Intent i = new Intent(getApplicationContext(), MainActivity.class);
-        startActivity(i);
-        setContentView(R.layout.activity_songs);
+        logout();
     }
 
     public void init() {
@@ -87,6 +81,16 @@ public class SongsActivity extends AppCompatActivity {
             public void onCompletion(MediaPlayer mp) { onCompletionEvent(); }
         });
         loadSongsForUser();
+    }
+
+    public void logout() {
+        player.stop(); player.reset();
+        getApplicationContext().deleteDatabase("webview.db");
+        getApplicationContext().deleteDatabase("webviewCache.db");
+        UserSession.getInstance().invalidateCredentials();
+        Intent i = new Intent(getApplicationContext(), MainActivity.class);
+        startActivity(i);
+        setContentView(R.layout.activity_songs);
     }
 
     /**
@@ -228,14 +232,24 @@ public class SongsActivity extends AppCompatActivity {
                 song.printPretty();
                 SongsActivity.this.songs.add(song);
             }
+            SongsActivity.this.runOnUiThread(new Runnable() {
+                @Override public void run() {
+                    initTableLayout();
+                }
+            });
         } catch (Throwable t) {
-            Log.d("My App", "FATAL ERROR: " + obj.toString());
-        }
-        SongsActivity.this.runOnUiThread(new Runnable() {
-            @Override public void run() {
-                initTableLayout();
+            Log.d("MY APP", "FATAL ERROR: " + obj.toString());
+            try {
+                JSONObject errorBody = obj.getJSONObject("error");
+                String code = errorBody.getString("error_code");
+                String msg = errorBody.getString("error_msg");
+                if (Integer.parseInt(code) == 5 || msg.contains("expired")) {
+                    logout();
+                }
+            } catch (Exception exception) {
+                Log.d("MY APP", "FATAL ERROR: " + exception.toString());
             }
-        });
+        }
     }
 
     protected void didTapSongRowForIndex(Integer i) {
