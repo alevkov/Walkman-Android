@@ -4,6 +4,8 @@ package com.example.lexlevi.walkman_android;
  * Created by lexlevi on 11/26/16.
  */
 
+import android.os.Handler;
+import android.support.annotation.Nullable;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -11,15 +13,16 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.widget.ImageView;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-
 import android.view.View;
+import android.widget.SeekBar;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
 
 import com.example.lexlevi.walkman_android.Model.Audio;
 import com.example.lexlevi.walkman_android.Singleton.PersistentStoreCoordinator;
@@ -36,14 +39,16 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 
-public class SongsActivity extends AppCompatActivity {
+public class SongsActivity extends AppCompatActivity implements OnSeekBarChangeListener {
 
     private Integer currentlyPlayingSongIdx = -1;
 
     private MediaPlayer player = new MediaPlayer();
     private ImageView playerControl;
+    private ImageView playerControlLeft;
+    private ImageView playerControlRight;
     private TextView selectedTrackTitle;
-    private TextView selectedTrackArtist;
+    private SeekBar trackTimeBar;
 
     private ArrayList<Audio> songs = new ArrayList<>();
 
@@ -65,26 +70,55 @@ public class SongsActivity extends AppCompatActivity {
         logout();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (player != null) {
+            if (player.isPlaying()) {
+                player.stop();
+            }
+            player.release();
+            player = null;
+        }
+    }
+
     public void init() {
         getWindow().setNavigationBarColor(Color.argb(255, 147, 198, 181));
         PersistentStoreCoordinator.getInstance().setSettingsWithContext(getApplicationContext());
         selectedTrackTitle = (TextView)findViewById(R.id.selected_track_title);
-        selectedTrackArtist = (TextView)findViewById(R.id.selected_track_artist);
+        trackTimeBar = (SeekBar)findViewById(R.id.seekTimeBar);
+        trackTimeBar.setOnSeekBarChangeListener(this);
         playerControl = (ImageView)findViewById(R.id.player_control);
+        playerControlLeft = (ImageView)findViewById(R.id.player_left);
+        playerControlRight = (ImageView)findViewById(R.id.player_right);
         playerControl.setImageResource(R.drawable.ic_play);
+        playerControlLeft.setImageResource(R.drawable.ic_left);
+        playerControlRight.setImageResource(R.drawable.ic_right);
         playerControl.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) { onPlayClick(); }
         });
+        playerControlLeft.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) { onSkipLeftClick(); }
+        });
+        playerControlRight.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) { onSkipRightClick(); }
+        });
         player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
-            public void onCompletion(MediaPlayer mp) { onCompletionEvent(); }
+            public void onCompletion(MediaPlayer mp) {
+                playerControl.setImageResource(R.drawable.ic_play);
+                mp.stop();
+                onSkipLeftClick();
+            }
         });
         loadSongsForUser();
     }
 
     public void logout() {
-        player.stop(); player.reset();
+        player.stop();
         getApplicationContext().deleteDatabase("webview.db");
         getApplicationContext().deleteDatabase("webviewCache.db");
         UserSession.getInstance().invalidateCredentials();
@@ -141,7 +175,9 @@ public class SongsActivity extends AppCompatActivity {
     public void setListenerForRow(final TableRow row, final Integer i) {
         row.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) { didTapSongRowForIndex(i); }
+            public void onClick(View v) {
+                didTapSongRowForIndex(i);
+            }
         });
     }
 
@@ -184,12 +220,6 @@ public class SongsActivity extends AppCompatActivity {
         }
     }
 
-    protected void onCompletionEvent() {
-        playerControl.setImageResource(R.drawable.ic_play);
-        player.stop();
-        player.reset();
-    }
-
     protected void onSkipRightClick() {
         if (currentlyPlayingSongIdx == (songs.size() - 1) || currentlyPlayingSongIdx == -1) {
             return;
@@ -202,14 +232,6 @@ public class SongsActivity extends AppCompatActivity {
             return;
         }
         playSongAtIndex(--currentlyPlayingSongIdx);
-    }
-
-    protected void onVolumeSliderValueChanged() {
-
-    }
-
-    protected void onSeekTimeSliderValueChanged() {
-
     }
 
     /**
@@ -268,24 +290,36 @@ public class SongsActivity extends AppCompatActivity {
         } else {
             selectedTrackTitle.setText(song.title);
         }
-        if (song.artist.length() > 20) {
-            selectedTrackArtist.setText(song.artist.substring(0, 20) + "..." + "  | ");
-        } else {
-            selectedTrackArtist.setText(song.artist + "  | ");
-        }
         playerControl.setImageResource(R.drawable.ic_pause);
-        Log.d("MY APP", "Should be starting song:\n");
-        song.printPretty();
+        trackTimeBar.setMax(song.duration);
+        Toast.makeText(getApplicationContext(), song.title, Toast.LENGTH_LONG);
+
+        Log.d("MY APP", "Should be starting song...\n");
         player.setAudioStreamType(AudioManager.STREAM_MUSIC);
         try {
             player.setDataSource(song.url);
-            player.prepare();
+            player.prepareAsync();
         } catch (Exception e) {
             Log.d("MY APP", e.toString());
         }
-        Log.d("MY APP", "Starting song:\n");
-        song.printPretty();
-        player.start();
+        player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer player) {
+                Log.d("MY APP", "Starting song now.\n");
+                player.start();
+            }
+        });
+        final Handler handler = new Handler();
+        SongsActivity.this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if(player != null){
+                    int mCurrentPosition = player.getCurrentPosition() / 1000;
+                    trackTimeBar.setProgress(mCurrentPosition);
+                }
+                handler.postDelayed(this, 1000);
+            }
+        });
     }
 
     protected String secondsToTimeString(int d) {
@@ -295,5 +329,28 @@ public class SongsActivity extends AppCompatActivity {
             return "" + min + ":0" + sec;
         }
         return "" + min + ":" + sec;
+    }
+
+    /**
+     * Seek bar listener methods
+     *
+     */
+
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int progress,
+                                  boolean fromUser) {
+        if(player != null && fromUser){
+            player.seekTo(progress * 1000);
+        }
+
+    }
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+
+
+    }
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+
     }
 }

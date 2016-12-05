@@ -23,7 +23,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        getWindow().setNavigationBarColor(Color.argb(255, 55, 212, 149));
+        getWindow().setNavigationBarColor(Color.argb(255, 147, 198, 181));
         PersistentStoreCoordinator.getInstance().setSettingsWithContext(getApplicationContext());
         o2 = new Oauth2();
         loginURL = o2.toURL();
