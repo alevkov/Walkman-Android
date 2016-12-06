@@ -4,6 +4,8 @@ package com.example.lexlevi.walkman_android;
  * Created by lexlevi on 11/26/16.
  */
 
+import android.app.ProgressDialog;
+import android.app.SearchManager;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.content.Intent;
@@ -21,7 +23,6 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 
 import com.example.lexlevi.walkman_android.Model.Audio;
@@ -42,16 +43,18 @@ import okhttp3.Response;
 public class SongsActivity extends AppCompatActivity implements OnSeekBarChangeListener {
 
     private Integer currentlyPlayingSongIdx = -1;
+    private boolean isSearching = false;
 
     private MediaPlayer player = new MediaPlayer();
     private ImageView playerControl;
     private ImageView playerControlLeft;
     private ImageView playerControlRight;
+    private ImageView searchButton;
+    private ImageView backButton;
     private TextView selectedTrackTitle;
     private SeekBar trackTimeBar;
-
     private ArrayList<Audio> songs = new ArrayList<>();
-
+    private ProgressDialog mDialog;
 
     /**
      * View Setup
@@ -62,6 +65,7 @@ public class SongsActivity extends AppCompatActivity implements OnSeekBarChangeL
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_songs);
+        handleIntent(getIntent());
         init();
     }
 
@@ -82,18 +86,56 @@ public class SongsActivity extends AppCompatActivity implements OnSeekBarChangeL
         }
     }
 
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        songs.clear();
+        handleIntent(intent);
+    }
+
+    private void handleIntent(Intent intent) {
+
+        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+            String query = intent.getStringExtra(SearchManager.QUERY);
+            isSearching = true;
+            songs.clear();
+            showResults(query);
+        }
+    }
+
+    private void showResults(String query) {
+        loadSongsForSearchQuery(query);
+    }
+
     public void init() {
         getWindow().setNavigationBarColor(Color.argb(255, 147, 198, 181));
         PersistentStoreCoordinator.getInstance().setSettingsWithContext(getApplicationContext());
         selectedTrackTitle = (TextView)findViewById(R.id.selected_track_title);
         trackTimeBar = (SeekBar)findViewById(R.id.seekTimeBar);
         trackTimeBar.setOnSeekBarChangeListener(this);
+        searchButton = (ImageView)findViewById(R.id.search);
+        backButton = (ImageView)findViewById(R.id.back);
         playerControl = (ImageView)findViewById(R.id.player_control);
         playerControlLeft = (ImageView)findViewById(R.id.player_left);
         playerControlRight = (ImageView)findViewById(R.id.player_right);
         playerControl.setImageResource(R.drawable.ic_play);
         playerControlLeft.setImageResource(R.drawable.ic_left);
         playerControlRight.setImageResource(R.drawable.ic_right);
+        searchButton.setImageResource(R.drawable.ic_search);
+        backButton.setImageResource(R.drawable.ic_back);
+        searchButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onSearchRequested();
+            }
+        });
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                songs.clear();
+                loadSongsForUser();
+            }
+        });
         playerControl.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) { onPlayClick(); }
@@ -111,10 +153,12 @@ public class SongsActivity extends AppCompatActivity implements OnSeekBarChangeL
             public void onCompletion(MediaPlayer mp) {
                 playerControl.setImageResource(R.drawable.ic_play);
                 mp.stop();
-                onSkipLeftClick();
+                onSkipRightClick();
             }
         });
-        loadSongsForUser();
+        if (!isSearching) {
+            loadSongsForUser();
+        }
     }
 
     public void logout() {
@@ -133,13 +177,15 @@ public class SongsActivity extends AppCompatActivity implements OnSeekBarChangeL
 
     public void initTableLayout() {
         TableLayout songsTable = (TableLayout)findViewById(R.id.songs_table_view);
+        songsTable.removeAllViewsInLayout();
         songsTable.setStretchAllColumns(true);
         songsTable.bringToFront();
         if (songs.isEmpty()) {
-            Toast.makeText(getApplicationContext(), "No songs!", Toast.LENGTH_LONG);
+            Toast.makeText(getApplicationContext(), "No songs!", Toast.LENGTH_LONG).show();
             return;
         }
         for(int i = 0; i < songs.size(); i++){
+            Log.d("MY APP", Integer.toString(songs.size()));
             Audio song = songs.get(i);
             TableRow row = new TableRow(this);
             row.setPadding(0, 0, 0, 1);
@@ -186,7 +232,35 @@ public class SongsActivity extends AppCompatActivity implements OnSeekBarChangeL
      */
 
     protected void loadSongsForUser() {
+        mDialog = new ProgressDialog(SongsActivity.this);
+        mDialog.setMessage("Please wait...");
+        mDialog.setCancelable(false);
+        mDialog.show();
         VKAPIConnector.getInstance().GET_SongsByUserID(UserSession.getInstance().getUserId(), new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.d("MY APP", "FATAL ERROR: " + e.toString());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String jsonString = response.body().string();
+                try {
+                    JSONObject obj = new JSONObject(jsonString);
+                    didFinishLoadingSongData(obj);
+                } catch (Exception e) {
+                    Log.d("MY APP", "FATAL ERROR: " + e.toString());
+                }
+            }
+        });
+    }
+
+    protected void loadSongsForSearchQuery(String q) {
+        mDialog = new ProgressDialog(SongsActivity.this);
+        mDialog.setMessage("Please wait...");
+        mDialog.setCancelable(false);
+        mDialog.show();
+        VKAPIConnector.getInstance().GET_songsByQuery(q, new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
                 Log.d("MY APP", "FATAL ERROR: " + e.toString());
@@ -240,6 +314,7 @@ public class SongsActivity extends AppCompatActivity implements OnSeekBarChangeL
      */
 
     protected void didFinishLoadingSongData(JSONObject obj) {
+        songs.clear();
         try {
             JSONArray array = obj.getJSONArray("response");
             for (int i = 1; i < array.length(); i++) {
@@ -256,6 +331,9 @@ public class SongsActivity extends AppCompatActivity implements OnSeekBarChangeL
             }
             SongsActivity.this.runOnUiThread(new Runnable() {
                 @Override public void run() {
+                    if (mDialog != null) {
+                        mDialog.hide();
+                    }
                     initTableLayout();
                 }
             });
@@ -292,7 +370,7 @@ public class SongsActivity extends AppCompatActivity implements OnSeekBarChangeL
         }
         playerControl.setImageResource(R.drawable.ic_pause);
         trackTimeBar.setMax(song.duration);
-        Toast.makeText(getApplicationContext(), song.title, Toast.LENGTH_LONG);
+        Toast.makeText(getApplicationContext(), song.title, Toast.LENGTH_LONG).show();
 
         Log.d("MY APP", "Should be starting song...\n");
         player.setAudioStreamType(AudioManager.STREAM_MUSIC);
