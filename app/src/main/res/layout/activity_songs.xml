@@ -55,6 +55,20 @@
                 android:layout_marginBottom="5dp"
                 android:textSize="6.3pt"
                 android:layout_above="@+id/player_control"/>
+
+            <ImageView
+                android:id="@+id/search"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginLeft="20dp"
+                android:layout_toRightOf="@+id/player_right"/>
+
+            <ImageView
+                android:id="@+id/back"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginRight="40dp"
+                android:layout_toLeftOf="@+id/player_left"/>
         </RelativeLayout>
 
     </android.support.v7.widget.Toolbar>
@@ -81,8 +95,6 @@
                     android:id="@+id/songs_table_view_row"
                     android:paddingLeft="10dp" />
             </TableLayout>
-
-
         </LinearLayout>
     </ScrollView>
 
