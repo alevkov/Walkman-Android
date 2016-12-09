@@ -1,5 +1,7 @@
 package com.example.lexlevi.walkman_android.Singleton;
 
+import android.content.Context;
+
 /**
  * Created by lexlevi on 11/25/16.
  */
@@ -11,32 +13,38 @@ public class UserSession {
 
     public static UserSession getInstance() { return ourInstance; }
 
+    private Context ctx;
+
     private UserSession() { }
+
+    public void setContext(Context ctx) {
+        this.ctx = ctx;
+    }
 
     public void setToken(String t) {
         this.token = t;
-        PersistentStoreCoordinator.getInstance().persistToken(t);
+        PersistentStoreCoordinator.getInstance(ctx).persistToken(t);
     }
 
     public void setUserId(String id) {
         this.userId = id;
-        PersistentStoreCoordinator.getInstance().persistUserId(id);
+        PersistentStoreCoordinator.getInstance(ctx).persistUserId(id);
     }
 
     public String getToken() {
-        return PersistentStoreCoordinator.getInstance().fetchToken();
+        return PersistentStoreCoordinator.getInstance(ctx).fetchToken();
     }
 
     public String getUserId() {
-        return PersistentStoreCoordinator.getInstance().fetchUserId();
+        return PersistentStoreCoordinator.getInstance(ctx).fetchUserId();
     }
 
     public boolean isTokenValid() {
-        return PersistentStoreCoordinator.getInstance().tokenExists() || !this.token.isEmpty();
+        return PersistentStoreCoordinator.getInstance(ctx).tokenExists() || !this.token.isEmpty();
     }
 
     public void invalidateCredentials() {
-        PersistentStoreCoordinator.getInstance().destroyCredentials();
+        PersistentStoreCoordinator.getInstance(ctx).destroyCredentials();
         this.token = "";
         this.userId = "";
     }

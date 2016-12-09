@@ -6,6 +6,8 @@ package com.example.lexlevi.walkman_android;
 
 import android.app.ProgressDialog;
 import android.app.SearchManager;
+import android.content.ContentValues;
+import android.database.Cursor;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.content.Intent;
@@ -25,7 +27,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 
-import com.example.lexlevi.walkman_android.Model.Audio;
+import com.example.lexlevi.walkman_android.Model.Song;
 import com.example.lexlevi.walkman_android.Singleton.PersistentStoreCoordinator;
 import com.example.lexlevi.walkman_android.Singleton.UserSession;
 import com.example.lexlevi.walkman_android.Singleton.VKAPIConnector;
@@ -53,7 +55,7 @@ public class SongsActivity extends AppCompatActivity implements OnSeekBarChangeL
     private ImageView backButton;
     private TextView selectedTrackTitle;
     private SeekBar trackTimeBar;
-    private ArrayList<Audio> songs = new ArrayList<>();
+    private ArrayList<Song> songs = new ArrayList<>();
     private ProgressDialog mDialog;
 
     /**
@@ -94,7 +96,6 @@ public class SongsActivity extends AppCompatActivity implements OnSeekBarChangeL
     }
 
     private void handleIntent(Intent intent) {
-
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String query = intent.getStringExtra(SearchManager.QUERY);
             isSearching = true;
@@ -109,7 +110,7 @@ public class SongsActivity extends AppCompatActivity implements OnSeekBarChangeL
 
     public void init() {
         getWindow().setNavigationBarColor(Color.argb(255, 147, 198, 181));
-        PersistentStoreCoordinator.getInstance().setSettingsWithContext(getApplicationContext());
+        PersistentStoreCoordinator.getInstance(getApplicationContext()).setSettingsWithContext(getApplicationContext());
         selectedTrackTitle = (TextView)findViewById(R.id.selected_track_title);
         trackTimeBar = (SeekBar)findViewById(R.id.seekTimeBar);
         trackTimeBar.setOnSeekBarChangeListener(this);
@@ -133,7 +134,8 @@ public class SongsActivity extends AppCompatActivity implements OnSeekBarChangeL
             @Override
             public void onClick(View v) {
                 songs.clear();
-                loadSongsForUser();
+                isSearching = false;
+                fetchSongsForUser();
             }
         });
         playerControl.setOnClickListener(new View.OnClickListener() {
@@ -157,7 +159,7 @@ public class SongsActivity extends AppCompatActivity implements OnSeekBarChangeL
             }
         });
         if (!isSearching) {
-            loadSongsForUser();
+            fetchSongsForUser();
         }
     }
 
@@ -186,7 +188,7 @@ public class SongsActivity extends AppCompatActivity implements OnSeekBarChangeL
         }
         for(int i = 0; i < songs.size(); i++){
             Log.d("MY APP", Integer.toString(songs.size()));
-            Audio song = songs.get(i);
+            Song song = songs.get(i);
             TableRow row = new TableRow(this);
             row.setPadding(0, 0, 0, 1);
             row.setMinimumHeight(127);
@@ -255,6 +257,40 @@ public class SongsActivity extends AppCompatActivity implements OnSeekBarChangeL
         });
     }
 
+    protected void fetchSongsForUser() {
+        songs.clear();
+        String[] projection = {
+                PersistentStoreCoordinator.KEY_SONG_ID,
+                PersistentStoreCoordinator.KEY_SONG_OWNERID,
+                PersistentStoreCoordinator.KEY_SONG_TITLE,
+                PersistentStoreCoordinator.KEY_SONG_ARTIST,
+                PersistentStoreCoordinator.KEY_SONG_DURATION,
+                PersistentStoreCoordinator.KEY_SONG_URL
+        };
+        String sortOrder =
+                PersistentStoreCoordinator.KEY_SONG_ID + " DESC";
+        Cursor cursor = PersistentStoreCoordinator.getInstance(getApplicationContext())
+                .getReadableDatabase().query(PersistentStoreCoordinator.SONGS_TABLE_NAME,
+                                                projection, null, null, null, null, sortOrder);
+        if (cursor.getCount() == 0) {
+            loadSongsForUser();
+            return;
+        }
+        cursor.moveToFirst();
+        while (cursor.moveToNext()) {
+            Song song = new Song();
+            song.id = cursor.getInt(cursor.getColumnIndex(PersistentStoreCoordinator.KEY_SONG_ID));;
+            song.owner_id = cursor.getInt(cursor.getColumnIndex(PersistentStoreCoordinator.KEY_SONG_OWNERID));
+            song.artist = cursor.getString(cursor.getColumnIndex(PersistentStoreCoordinator.KEY_SONG_ARTIST));
+            song.title = cursor.getString(cursor.getColumnIndex(PersistentStoreCoordinator.KEY_SONG_TITLE));
+            song.duration = cursor.getInt(cursor.getColumnIndex(PersistentStoreCoordinator.KEY_SONG_DURATION));
+            song.url = cursor.getString(cursor.getColumnIndex(PersistentStoreCoordinator.KEY_SONG_URL));
+            songs.add(song);
+            song.printPretty();
+        }
+        initTableLayout();
+    }
+
     protected void loadSongsForSearchQuery(String q) {
         mDialog = new ProgressDialog(SongsActivity.this);
         mDialog.setMessage("Please wait...");
@@ -314,20 +350,34 @@ public class SongsActivity extends AppCompatActivity implements OnSeekBarChangeL
      */
 
     protected void didFinishLoadingSongData(JSONObject obj) {
+        PersistentStoreCoordinator.getInstance(getApplicationContext()).getWritableDatabase();
         songs.clear();
         try {
             JSONArray array = obj.getJSONArray("response");
+            ContentValues values = new ContentValues();
             for (int i = 1; i < array.length(); i++) {
                 JSONObject songObj = array.getJSONObject(i);
-                Audio song = new Audio();
+                Song song = new Song();
                 song.id = Integer.valueOf(songObj.get("aid").toString());
                 song.owner_id = Integer.valueOf(songObj.get("owner_id").toString());
                 song.artist = songObj.get("artist").toString();
                 song.title = songObj.get("title").toString();
                 song.duration = Integer.valueOf(songObj.get("duration").toString());
                 song.url = songObj.get("url").toString();
-                song.printPretty();
                 SongsActivity.this.songs.add(song);
+                if (!isSearching) {
+                    values.put(PersistentStoreCoordinator.KEY_SONG_ID, song.id);
+                    values.put(PersistentStoreCoordinator.KEY_SONG_OWNERID, song.owner_id);
+                    values.put(PersistentStoreCoordinator.KEY_SONG_ARTIST, song.artist);
+                    values.put(PersistentStoreCoordinator.KEY_SONG_TITLE, song.title);
+                    values.put(PersistentStoreCoordinator.KEY_SONG_DURATION, song.duration);
+                    values.put(PersistentStoreCoordinator.KEY_SONG_URL, song.url);
+                    long newRowId = PersistentStoreCoordinator.
+                            getInstance(getApplicationContext())
+                            .getWritableDatabase().insert(PersistentStoreCoordinator.SONGS_TABLE_NAME,
+                                    null,
+                                    values);
+                }
             }
             SongsActivity.this.runOnUiThread(new Runnable() {
                 @Override public void run() {
@@ -362,7 +412,7 @@ public class SongsActivity extends AppCompatActivity implements OnSeekBarChangeL
             player.stop();
         }
         player.reset();
-        Audio song = songs.get(i);
+        Song song = songs.get(i);
         if (song.title.length() > 22) {
             selectedTrackTitle.setText(song.title.substring(0, 22) + "...");
         } else {
