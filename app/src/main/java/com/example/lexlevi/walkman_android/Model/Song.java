@@ -7,8 +7,8 @@ import android.util.Log;
  * Created by lexlevi on 11/26/16.
  */
 
-public class Audio {
-    public Audio () { }
+public class Song {
+    public Song() { }
 
     public Integer id = 0;
     public Integer owner_id = 0;

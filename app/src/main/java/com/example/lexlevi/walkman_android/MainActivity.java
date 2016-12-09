@@ -22,14 +22,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        UserSession.getInstance().setContext(getApplicationContext());
         setContentView(R.layout.activity_main);
         getWindow().setNavigationBarColor(Color.argb(255, 147, 198, 181));
-        PersistentStoreCoordinator.getInstance().setSettingsWithContext(getApplicationContext());
+        PersistentStoreCoordinator.getInstance(getApplicationContext()).setSettingsWithContext(getApplicationContext());
         o2 = new Oauth2();
         loginURL = o2.toURL();
         if (UserSession.getInstance().isTokenValid()) {
             segueToSongsActivity();
-            Log.d("MY APP", PersistentStoreCoordinator.getInstance().fetchToken());
+            Log.d("MY APP", PersistentStoreCoordinator.getInstance(getApplicationContext()).fetchToken());
             return;
         }
         browserWebView = (WebView) findViewById(R.id.main_webView_browser);
